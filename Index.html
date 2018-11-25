@@ -1,0 +1,164 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+    <title>Inventorix</title>
+    <script type="text/javascript">
+        var ws;
+        var wsUri = "ws:";
+        var loc = window.location;
+        console.log(loc);
+        if (loc.protocol === "https:") { wsUri = "wss:"; }
+        // This needs to point to the web socket in the Node-RED flow
+        // ... in this case it's ws/simple
+        wsUri += "//" + loc.host + loc.pathname.replace("tjvisual","ws/tjvisual");
+
+        function showImage(){
+        document.getElementById('loadingImage').style.visibility='visible';
+
+        }
+        
+        function wsConnect() {
+            console.log("connect",wsUri);
+            ws = new WebSocket(wsUri);
+            var line = "";    // either uncomment this for a building list of messages
+            //change IP Hotspot:192.168.43.231 Home:192.168.0.104  9.233.20.105
+            ws.onmessage = function(msg) {
+                var image = "<img src='muskan.jpg"+ new Date().getTime() + "' alt='Picture' width='480px'/>";
+                console.log(image);
+                document.getElementById('displayimage').innerHTML = image;
+                // data from the http response from the visrec flow on bluemix
+                var data = msg.data;
+                console.log(data); //log output from visual rec analyzation
+                line = data
+                document.getElementById('messages').innerHTML = line;
+
+                
+            }
+            ws.onopen = function() {
+                // update the status div with the connection status
+                document.getElementById('status').innerHTML = "Websocket is connected and the app is ready to use.";
+                //ws.send("Open for data");
+                console.log("connected");
+            }
+            ws.onclose = function() {
+                
+                // update the status div with the connection status
+                document.getElementById('status').innerHTML = "Websocket is not connected. Reconnecting in progress.";
+                // in case of lost connection tries to reconnect every 3 secs
+                setTimeout(wsConnect,3000);
+            }
+        }
+        
+        function takepic(m) {
+            if (ws) { ws.send(m); }
+            console.log("taking picture");
+        }
+        
+        function analyze(m)  {
+            if (ws) { ws.send(m); }
+            console.log("analyzing picture");
+        }
+    </script>
+    
+    <style>
+        body{
+            padding-top: 45px;
+            background: rgb(245,247,250);
+            font-family:helvetica;
+            font-size: 16px;
+        }
+        
+        div {
+            margin-top: 10px;
+        }
+        
+        p {
+            text-align: center;
+            margin: 0;
+            font-size: 16px;
+        }
+        
+        hr {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        
+       #header {
+            position: absolute;
+            margin: 0;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: #f7b32d;
+            box-sizing: border-box;
+            color: #fff;
+            font-size: 25px;
+            text-align: center;
+            vertical-align: middle;
+            line-height: 50px;
+        }
+        
+        #divbutton{
+            margin: 0px;
+            display:inline-block;
+            
+        }
+        
+        img {
+            display: block;
+            margin: auto;
+            padding: 0px;
+        }
+       
+        h1 {
+            text-align: center;
+        }
+
+        button{
+            padding:16px 20px;
+            margin: auto;
+            width: 200px;
+            font-weight:100;
+            color:#fff;
+            font-size: 18px;
+            background: #ea833d;
+            border:0;
+        }
+        button:hover{
+            background: rgb(0,102,87);
+        }
+        
+        #status{
+          font-size: 10px;
+          position: relative;
+          bottom: 0;
+          text-align: center;
+        }
+        
+    </style>
+    
+    </head>
+    <body onload="wsConnect();" onunload="ws.disconnect();">
+        <div id="header">Inventorix</div>
+        
+        <div>
+            <p>Inventorix is a IBM cloud based smart inventory management system which is backed by Visual recognition to keep track of Inventory.</p>
+            <p>Now you can start taking a picture and analyze it with the Visual Recognition Service on IBM Bluemix.</p>
+        </div>
+        
+        
+        
+        <div style="text-align:center">
+            <div id="divbutton"><button type="button" onclick='takepic("take picture");'>Take a Picture</button></div>
+            <div id="divbutton"><button type="button" onclick='analyze("analyze picture");'>Analyze it</button></div>
+            <button type ="button" value="" onclick="showImage();"> View Image </button>
+            <img id="loadingImage" src="muskan.jpg" style="visibility:hidden"/>
+            <div id="displayimage"></div>
+            <div id="messages"></div>
+            <hr>
+            <div id="status">Websocket status unknown</div>
+        </div>
+    </body>
+</html>
+
